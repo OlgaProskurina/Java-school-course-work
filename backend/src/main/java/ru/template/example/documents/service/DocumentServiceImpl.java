@@ -1,67 +1,80 @@
 package ru.template.example.documents.service;
 
-import org.apache.commons.lang3.RandomUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.template.example.documents.controller.dto.DocumentDto;
-import ru.template.example.documents.controller.dto.Status;
-import ru.template.example.documents.store.DocumentStore;
+import ru.template.example.documents.entity.Document;
+import ru.template.example.documents.DocumentStatus;
+import ru.template.example.documents.repository.DocumentRepository;
 
-import java.util.Date;
+import javax.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+/**
+ * {@inheritDoc}
+ */
 @Service
+@RequiredArgsConstructor
 public class DocumentServiceImpl implements DocumentService {
-
-    public DocumentDto save(DocumentDto documentDto) {
-        if (documentDto.getId() == null) {
-            documentDto.setId(RandomUtils.nextLong(0L, 999L));
-        }
-        documentDto.setDate(new Date());
-        if (documentDto.getStatus() == null) {
-            documentDto.setStatus(Status.of("NEW", "Новый"));
-        }
-        DocumentStore.getInstance().getDocumentDtos().add(documentDto);
-        return documentDto;
+    
+    private final DocumentRepository documentRepository;
+    
+    /**
+     * Устанавливает текущую дату и статус {@code Status.NEW} для переданного документа.
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public Document save(Document document) {
+        document.setStatus(DocumentStatus.NEW);
+        document.setDate(LocalDate.now());
+        return documentRepository.save(document);
     }
-
-
-    public DocumentDto update(DocumentDto documentDto) {
-        List<DocumentDto> documentDtos = DocumentStore.getInstance().getDocumentDtos();
-        Optional<DocumentDto> dto = documentDtos.stream()
-                .filter(d -> d.getId().equals(documentDto.getId())).findFirst();
-        if (dto.isPresent()) {
-            delete(documentDto.getId());
-            save(documentDto);
-        }
-        return documentDto;
-    }
-
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
     public void delete(Long id) {
-        List<DocumentDto> documentDtos = DocumentStore.getInstance().getDocumentDtos();
-        List<DocumentDto> newList = documentDtos.stream()
-                .filter(d -> !d.getId().equals(id)).collect(Collectors.toList());
-        documentDtos.clear();
-        documentDtos.addAll(newList);
+        documentRepository.deleteById(id);
     }
-
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public Document processDocument(Long id) {
+        Document document = documentRepository.getOne(id);
+        document.setStatus(DocumentStatus.IN_PROCESS);
+        return document;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
     public void deleteAll(Set<Long> ids) {
-        List<DocumentDto> documentDtos = DocumentStore.getInstance().getDocumentDtos();
-        List<DocumentDto> newList = documentDtos.stream()
-                .filter(d -> !ids.contains(d.getId())).collect(Collectors.toList());
-        documentDtos.clear();
-        documentDtos.addAll(newList);
+        documentRepository.deleteAllByIdIn(ids);
     }
-
-    public List<DocumentDto> findAll() {
-        return DocumentStore.getInstance().getDocumentDtos();
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Document> findAll() {
+        return documentRepository.findAll();
     }
-
-    public DocumentDto get(Long id) {
-        List<DocumentDto> documentDtos = DocumentStore.getInstance().getDocumentDtos();
-        return documentDtos.stream()
-                .filter(d -> d.getId().equals(id)).findFirst().get();
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Document getOne(Long id) {
+        return documentRepository.getOne(id);
     }
+    
 }
