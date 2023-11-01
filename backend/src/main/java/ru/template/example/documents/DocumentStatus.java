@@ -12,7 +12,7 @@ public enum DocumentStatus {
     NEW("NEW", "Новый"),
     IN_PROCESS("IN_PROCESS", "В обработке"),
     DECLINED("DECLINED", "Отклонен"),
-    ACCEPTED("NEW", "Новый");
+    ACCEPTED("ACCEPTED", "Принят");
     
     private final String code;
     private final String name;
