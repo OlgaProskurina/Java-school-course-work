@@ -1,7 +1,7 @@
 package ru.template.example.documents.service;
 
 import ru.template.example.documents.DocumentStatus;
-import ru.template.example.documents.entity.Document;
+import ru.template.example.documents.dto.DocumentDto;
 
 import java.util.List;
 import java.util.Set;
@@ -13,10 +13,10 @@ public interface DocumentService {
     /**
      * Сохраняет и возвращает сохраненный документ.
      *
-     * @param document документ
+     * @param documentDto документ
      * @return сохраненный документ
      */
-    Document save(Document document);
+    DocumentDto save(DocumentDto documentDto);
     
     /**
      * Удалить документы по идентификаторам.
@@ -38,14 +38,14 @@ public interface DocumentService {
      * @param id идентификатор документа
      * @return обновленный документ
      */
-    Document processDocument(Long id);
+    DocumentDto processDocument(Long id);
     
     /**
      * Получить список всех документов.
      *
      * @return список документов
      */
-    List<Document> findAll();
+    List<DocumentDto> findAll();
     
     /**
      * Получить документ по идентификатору.
@@ -53,5 +53,5 @@ public interface DocumentService {
      * @param id идентификатор
      * @return документ
      */
-    Document getOne(Long id);
+    DocumentDto getOne(Long id);
 }
