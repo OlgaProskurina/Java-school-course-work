@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.template.example.controller.AbstractWebMvcTest;
-import ru.template.example.documents.controller.dto.DocumentDto;
+import ru.template.example.documents.dto.DocumentDto;
 import ru.template.example.documents.service.DocumentServiceImpl;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
