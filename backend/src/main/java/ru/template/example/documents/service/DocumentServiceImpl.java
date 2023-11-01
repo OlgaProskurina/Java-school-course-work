@@ -2,14 +2,17 @@ package ru.template.example.documents.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.template.example.documents.dto.DocumentDto;
 import ru.template.example.documents.entity.Document;
 import ru.template.example.documents.DocumentStatus;
 import ru.template.example.documents.repository.DocumentRepository;
+import ru.template.example.documents.utils.DocumentMapper;
 
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * {@inheritDoc}
@@ -17,8 +20,14 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class DocumentServiceImpl implements DocumentService {
-    
+    /**
+     * Репозиторий для документов.
+     */
     private final DocumentRepository documentRepository;
+    /**
+     * Маппер entity и DTO.
+     */
+    private final DocumentMapper documentMapper;
     
     /**
      * Устанавливает текущую дату и статус {@code Status.NEW} для переданного документа.
@@ -26,10 +35,12 @@ public class DocumentServiceImpl implements DocumentService {
      */
     @Override
     @Transactional
-    public Document save(Document document) {
+    public DocumentDto save(DocumentDto documentDto) {
+        Document document = documentMapper.toDocument(documentDto);
         document.setStatus(DocumentStatus.NEW);
         document.setDate(LocalDate.now());
-        return documentRepository.save(document);
+        documentRepository.save(document);
+        return documentMapper.toDocumentDto(document);
     }
     
     /**
@@ -46,10 +57,10 @@ public class DocumentServiceImpl implements DocumentService {
      */
     @Override
     @Transactional
-    public Document processDocument(Long id) {
+    public DocumentDto processDocument(Long id) {
         Document document = documentRepository.getOne(id);
         document.setStatus(DocumentStatus.IN_PROCESS);
-        return document;
+        return documentMapper.toDocumentDto(document);
     }
     
     /**
@@ -65,16 +76,19 @@ public class DocumentServiceImpl implements DocumentService {
      * {@inheritDoc}
      */
     @Override
-    public List<Document> findAll() {
-        return documentRepository.findAll();
+    public List<DocumentDto> findAll() {
+        return documentRepository.findAll()
+                                 .stream()
+                                 .map(documentMapper::toDocumentDto)
+                                 .collect(Collectors.toList());
     }
     
     /**
      * {@inheritDoc}
      */
     @Override
-    public Document getOne(Long id) {
-        return documentRepository.getOne(id);
+    public DocumentDto getOne(Long id) {
+        return documentMapper.toDocumentDto(documentRepository.getOne(id));
     }
     
 }

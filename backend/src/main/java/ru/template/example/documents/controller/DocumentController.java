@@ -12,37 +12,30 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.template.example.documents.dto.DocumentDto;
 import ru.template.example.documents.dto.IdDto;
 import ru.template.example.documents.dto.IdsDto;
-import ru.template.example.documents.entity.Document;
 import ru.template.example.documents.service.DocumentService;
-import ru.template.example.documents.utils.DocumentMapper;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/documents")
 @RequiredArgsConstructor
 public class DocumentController {
     
+    /**
+     * Сервис по работе с документами.
+     */
     private final DocumentService documentService;
-    
-    private final DocumentMapper documentMapper;
     
     @PostMapping(
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public DocumentDto save(@RequestBody DocumentDto dto) {
-        Document document = documentMapper.toDocument(dto);
-        documentService.save(document);
-        return documentMapper.toDocumentDto(document);
+        return documentService.save(dto);
     }
     
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<DocumentDto> get() {
-        return documentService.findAll()
-                .stream()
-                .map(documentMapper::toDocumentDto)
-                .collect(Collectors.toList());
+        return documentService.findAll();
     }
     
     @PostMapping(
@@ -50,8 +43,7 @@ public class DocumentController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public DocumentDto send(@RequestBody IdDto id) {
-        Document document = documentService.processDocument(id.getId());
-        return documentMapper.toDocumentDto(document);
+       return documentService.processDocument(id.getId());
     }
     
     @DeleteMapping(path = "/{id}")
