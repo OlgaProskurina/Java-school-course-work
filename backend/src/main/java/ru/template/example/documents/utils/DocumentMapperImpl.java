@@ -1,7 +1,7 @@
-package ru.template.example.utils;
+package ru.template.example.documents.utils;
 
 import org.springframework.stereotype.Component;
-import ru.template.example.documents.controller.dto.DocumentDto;
+import ru.template.example.documents.dto.DocumentDto;
 import ru.template.example.documents.entity.Document;
 
 @Component

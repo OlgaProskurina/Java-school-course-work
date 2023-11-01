@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.template.example.documents.controller.dto.DocumentDto;
-import ru.template.example.documents.controller.dto.IdDto;
-import ru.template.example.documents.controller.dto.IdsDto;
+import ru.template.example.documents.dto.DocumentDto;
+import ru.template.example.documents.dto.IdDto;
+import ru.template.example.documents.dto.IdsDto;
 import ru.template.example.documents.entity.Document;
 import ru.template.example.documents.service.DocumentService;
-import ru.template.example.utils.DocumentMapper;
+import ru.template.example.documents.utils.DocumentMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
