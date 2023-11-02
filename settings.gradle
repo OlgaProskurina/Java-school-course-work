@@ -2,3 +2,6 @@ rootProject.name = 'course.template'
 
 include 'ui'
 include 'backend'
+include 'kafka'
+include 'kafka'
+
