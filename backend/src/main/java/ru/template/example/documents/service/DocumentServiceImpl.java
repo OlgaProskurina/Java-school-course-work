@@ -28,6 +28,10 @@ public class DocumentServiceImpl implements DocumentService {
      * Маппер entity и DTO.
      */
     private final DocumentMapper documentMapper;
+    /**
+     * Сервис для outbox.
+     */
+    private final DocumentOutboxService outboxService;
     
     /**
      * Устанавливает текущую дату и статус {@code Status.NEW} для переданного документа.
@@ -60,7 +64,9 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentDto processDocument(Long id) {
         Document document = documentRepository.getOne(id);
         document.setStatus(DocumentStatus.IN_PROCESS);
-        return documentMapper.toDocumentDto(document);
+        DocumentDto documentDto = documentMapper.toDocumentDto(document);
+        outboxService.addMessage(documentDto);
+        return documentDto;
     }
     
     /**

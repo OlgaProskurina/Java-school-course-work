@@ -32,6 +32,10 @@ dependencies {
 
     implementation("org.liquibase:liquibase-core:4.8.0")
     runtimeOnly("org.postgresql:postgresql:42.6.0")
+
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("com.vladmihalcea:hibernate-types-52:2.20.0")
+
 }
 
 
