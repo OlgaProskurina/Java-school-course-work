@@ -7,6 +7,16 @@ logging:
 cors:
   allow: true
 
+kafka:
+  topic:
+    process-document: process_document
+
+outbox:
+  scheduler:
+    enable: true
+    initialDelayMillis: 10000
+    fixedDelayMillis: 8000
+
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -24,3 +34,6 @@ spring:
 
   liquibase:
     change-log: classpath:db/changelog/master-changelog.xml
+
+  kafka:
+    bootstrap-servers: localhost:29092
