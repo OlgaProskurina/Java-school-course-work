@@ -1,4 +1,4 @@
-package ru.template.example.configuration;
+package ru.template.example.configuration.messaging;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.kafka.clients.producer.ProducerConfig;

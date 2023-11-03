@@ -62,9 +62,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public DocumentDto processDocument(Long id) {
-        Document document = documentRepository.getOne(id);
-        document.setStatus(DocumentStatus.IN_PROCESS);
-        DocumentDto documentDto = documentMapper.toDocumentDto(document);
+        DocumentDto documentDto = updateStatus(id, DocumentStatus.IN_PROCESS);
         outboxService.addMessage(documentDto);
         return documentDto;
     }
@@ -93,8 +91,11 @@ public class DocumentServiceImpl implements DocumentService {
      * {@inheritDoc}
      */
     @Override
-    public DocumentDto getOne(Long id) {
-        return documentMapper.toDocumentDto(documentRepository.getOne(id));
+    @Transactional
+    public DocumentDto updateStatus(Long id, DocumentStatus newStatus) {
+        Document document = documentRepository.getOne(id);
+        document.setStatus(newStatus);
+        return documentMapper.toDocumentDto(document);
     }
     
 }

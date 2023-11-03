@@ -1,4 +1,4 @@
-package ru.template.example.documents.kafka;
+package ru.template.example.documents.messaging;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;

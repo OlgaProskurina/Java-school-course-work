@@ -10,6 +10,7 @@ cors:
 kafka:
   topic:
     process-document: process_document
+    response-document: response_document
 
 outbox:
   scheduler:
@@ -37,3 +38,5 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:29092
+    consumer:
+      group-id: document_state_updaters

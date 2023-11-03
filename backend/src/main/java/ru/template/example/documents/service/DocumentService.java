@@ -48,10 +48,11 @@ public interface DocumentService {
     List<DocumentDto> findAll();
     
     /**
-     * Получить документ по идентификатору.
+     * Обновить статус документа по идентификатору.
      *
      * @param id идентификатор
-     * @return документ
+     * @param newStatus новый статус
+     * @return обновленный документ
      */
-    DocumentDto getOne(Long id);
+    DocumentDto updateStatus(Long id, DocumentStatus newStatus);
 }
