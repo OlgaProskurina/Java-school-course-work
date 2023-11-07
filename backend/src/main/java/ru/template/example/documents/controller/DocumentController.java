@@ -14,6 +14,7 @@ import ru.template.example.documents.dto.IdDto;
 import ru.template.example.documents.dto.IdsDto;
 import ru.template.example.documents.service.DocumentService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -29,7 +30,7 @@ public class DocumentController {
     @PostMapping(
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public DocumentDto save(@RequestBody DocumentDto dto) {
+    public DocumentDto save(@Valid @RequestBody DocumentDto dto) {
         return documentService.save(dto);
     }
     
@@ -42,17 +43,17 @@ public class DocumentController {
             path = "send",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public DocumentDto send(@RequestBody IdDto id) {
+    public DocumentDto send(@Valid @RequestBody IdDto id) {
        return documentService.processDocument(id.getId());
     }
     
     @DeleteMapping(path = "/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@Valid @PathVariable Long id) {
         documentService.delete(id);
     }
     
     @DeleteMapping
-    public void deleteAll(@RequestBody IdsDto idsDto) {
+    public void deleteAll(@Valid @RequestBody IdsDto idsDto) {
         documentService.deleteAll(idsDto.getIds());
     }
     

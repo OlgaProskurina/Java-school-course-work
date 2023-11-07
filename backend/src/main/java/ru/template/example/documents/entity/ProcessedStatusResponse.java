@@ -9,8 +9,8 @@ import javax.persistence.Table;
 
 @Entity
 @Data
-@Table(name = "processed_messages")
-public class ProcessedMessage {
+@Table(name = "processed_status_response")
+public class ProcessedStatusResponse {
     @Id
     @Column(name = "message_id")
     Long messageId;
