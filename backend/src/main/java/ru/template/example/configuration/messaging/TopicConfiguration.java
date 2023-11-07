@@ -1,4 +1,4 @@
-package ru.template.example.config;
+package ru.template.example.configuration.messaging;
 
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -11,11 +11,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-public class TopicConfig {
+public class TopicConfiguration {
     
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
     
+    @Value(value = "kafka.topic.response-document")
+    private String responseTopic;
+    @Value(value = "kafka.topic.process_document")
+    private String processTopic;
+
     @Bean
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
@@ -24,12 +29,12 @@ public class TopicConfig {
     }
     
     @Bean
-    public NewTopic requestProcessDocumentTopic() {
-        return new NewTopic("process_document", 1, (short) 1);
+    public NewTopic processProcessDocumentTopic() {
+        return new NewTopic(processTopic, 1, (short) 1);
     }
     
     @Bean
     public NewTopic responseDocumentStateTopic() {
-        return new NewTopic("response_document", 1, (short) 1);
+        return new NewTopic(responseTopic, 1, (short) 1);
     }
 }
