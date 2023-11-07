@@ -16,9 +16,10 @@ public class TopicConfiguration {
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
     
-    @Value(value = "kafka.topic.response-document")
+    @Value(value = "${kafka.topic.response-document}")
     private String responseTopic;
-    @Value(value = "kafka.topic.process_document")
+    
+    @Value(value = "${kafka.topic.process-document}")
     private String processTopic;
 
     @Bean

@@ -13,20 +13,38 @@
 
 - [node](https://nodejs.org) - front
 - [openjdk](https://openjdk.java.net) 15 - java бэк
+- [docker](https://www.docker.com/get-started/)
 
-## Запуск
+## Запуск в докере
 
-### Запуск фронта
+### Сборка фронта
 
 ```
-./gradlew ui:npm_run_start
+./gradlew ui:build
 ```
-### Запуск бэка
+### Сборка бека
 ```
-./gradlew backend:bootrun
+./gradlew backend:bootJar
+```
+
+### Запуск через docker-compose
+```
+docker-compose up
 ```
 
 ### Адрес страницы
 ```
 http://localhost:9000/#/
 ```
+## Использование
+Создать документ и отправить в обработку. После этого в топик response-document нужно отправить сообщение вида:
+```json
+ {
+ "messageId": 1, 
+ "documentId": 1,
+ "status": "ACCEPTED"
+ }
+```
+Где messageId - это уникальный идентификатор сообщения,
+documentId - номер документа, отправленного в обработку,
+status - результат обработки документа, может быть или ACCEPTED или DECLINED.

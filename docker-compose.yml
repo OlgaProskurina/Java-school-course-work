@@ -2,12 +2,26 @@ version: '3.8'
 services:
   api:
     image: docker-java-jar
+    build:
+      context: ./backend
+    depends_on:
+      - postgresqldb
+      - kafka
     ports:
       - '8888:8888'
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresqldb:5432/curs_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
   ui:
     image: docker-react
+    build:
+      context: ./ui
+    depends_on:
+      - api
     ports:
-      - '3006:3005'
+      - '9000:3005'
     volumes:
       - ./ui/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./ui/public/index.html:/usr/share/nginx/html/index.html
@@ -35,3 +49,14 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  postgresqldb:
+    image: postgres:16.0
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: curs_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/postgresql/data
