@@ -1,4 +1,4 @@
-package ru.template.example.configuration.messaging;
+package ru.template.example.configuration;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;

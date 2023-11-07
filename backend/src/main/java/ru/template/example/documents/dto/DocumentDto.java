@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.template.example.documents.DocumentStatus;
 
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 
 @Data
@@ -20,18 +21,22 @@ public class DocumentDto {
     /**
      * Вид документа
      */
+    @NotBlank
     private String type;
     /**
      * Организация
      */
+    @NotBlank
     private String organization;
     /**
      * Описание
      */
+    @NotBlank
     private String description;
     /**
      * Пациент
      */
+    @NotBlank
     private String patient;
     /**
      * Дата документа

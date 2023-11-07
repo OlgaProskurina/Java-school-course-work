@@ -2,9 +2,9 @@ package ru.template.example.documents.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import ru.template.example.documents.entity.ProcessedMessage;
+import ru.template.example.documents.entity.ProcessedStatusResponse;
 
 @Repository
-public interface ProcessedMessageRepository extends JpaRepository<ProcessedMessage, Long> {
+public interface ProcessedMessageRepository extends JpaRepository<ProcessedStatusResponse, Long> {
 
 }

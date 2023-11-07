@@ -2,20 +2,23 @@ package ru.template.example.documents.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.template.example.documents.dto.DocumentDto;
 import ru.template.example.documents.entity.Document;
 import ru.template.example.documents.DocumentStatus;
+import ru.template.example.documents.expeptions.DocumentNotFoundException;
+import ru.template.example.documents.expeptions.IllegalDocumentStatusException;
 import ru.template.example.documents.repository.DocumentRepository;
 import ru.template.example.documents.utils.DocumentMapper;
 
-import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * {@inheritDoc}
+ * Сервис по работе с документами
  */
 @Service
 @RequiredArgsConstructor
@@ -34,8 +37,11 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentOutboxService outboxService;
     
     /**
-     * Устанавливает текущую дату и статус {@code Status.NEW} для переданного документа.
-     * {@inheritDoc}
+     * Устанавливает текущую дату и статус {@code Status.NEW} для переданного документа,
+     * сохраняет и возвращает сохраненный документ.
+     *
+     * @param documentDto документ
+     * @return сохраненный документ
      */
     @Override
     @Transactional
@@ -48,7 +54,9 @@ public class DocumentServiceImpl implements DocumentService {
     }
     
     /**
-     * {@inheritDoc}
+     * Удалить документ по идентификатору.
+     *
+     * @param id идентификатор документа
      */
     @Override
     @Transactional
@@ -57,18 +65,32 @@ public class DocumentServiceImpl implements DocumentService {
     }
     
     /**
-     * {@inheritDoc}
+     * Обновляет статус документа на {@link DocumentStatus#IN_PROCESS} по идентификатору
+     * и добавляет ДТО документа в исходящие сообщения.
+     *
+     * @param id идентификатор документа
+     * @return обновленный документ
+     * @throws DocumentNotFoundException если документа с таким идентификатором не найдено
+     * @throws IllegalDocumentStatusException если статус документа был не {@link DocumentStatus#NEW}
+     *
      */
     @Override
     @Transactional
     public DocumentDto processDocument(Long id) {
-        DocumentDto documentDto = updateStatus(id, DocumentStatus.IN_PROCESS);
+        Document document = requireDocument(id);
+        if (!DocumentStatus.NEW.equals(document.getStatus())) {
+            throw new IllegalDocumentStatusException("Отправить в обработку можно только документ со статусом " + DocumentStatus.NEW);
+        }
+        document.setStatus(DocumentStatus.IN_PROCESS);
+        DocumentDto documentDto = documentMapper.toDocumentDto(document);
         outboxService.addMessage(documentDto);
         return documentDto;
     }
     
     /**
-     * {@inheritDoc}
+     * Удалить документы по идентификаторам.
+     *
+     * @param ids идентификаторы документов
      */
     @Override
     @Transactional
@@ -77,9 +99,12 @@ public class DocumentServiceImpl implements DocumentService {
     }
     
     /**
-     * {@inheritDoc}
+     * Получить список всех документов.
+     *
+     * @return список документов
      */
     @Override
+    @Transactional(readOnly = true)
     public List<DocumentDto> findAll() {
         return documentRepository.findAll()
                                  .stream()
@@ -88,14 +113,40 @@ public class DocumentServiceImpl implements DocumentService {
     }
     
     /**
-     * {@inheritDoc}
+     * Обновить статус документа по результатам обработки.
+     *
+     * @param id        идентификатор документа
+     * @param newStatus новый статус
+     * @throws DocumentNotFoundException если документа с таким идентификатором не найдено
+     * @throws IllegalDocumentStatusException если документа статус документа был не {@link DocumentStatus#IN_PROCESS},
+     *                                       или {@link DocumentStatus#ACCEPTED}, или {@link DocumentStatus#DECLINED}
      */
     @Override
     @Transactional
-    public DocumentDto updateStatus(Long id, DocumentStatus newStatus) {
-        Document document = documentRepository.getOne(id);
+    public void updateStatus(Long id, DocumentStatus newStatus) {
+        Document document = requireDocument(id);
+        if (!DocumentStatus.IN_PROCESS.equals(document.getStatus())) {
+            throw new IllegalDocumentStatusException("Документ должен иметь статус " + DocumentStatus.IN_PROCESS);
+        }
+        if (!DocumentStatus.ACCEPTED.equals(newStatus) && !DocumentStatus.DECLINED.equals(newStatus)) {
+            throw new IllegalDocumentStatusException("Новый статус может быть или " + DocumentStatus.ACCEPTED +
+                    " или " + DocumentStatus.DECLINED);
+        }
         document.setStatus(newStatus);
-        return documentMapper.toDocumentDto(document);
     }
     
+    /**
+     * Возвращает документ по идентификатору.
+     *
+     * @param id идентификатор
+     * @return найденный документ
+     * @throws DocumentNotFoundException если документа с таким идентификатором не найдено
+     */
+    private Document requireDocument(Long id) {
+        Optional<Document> documentOptional = documentRepository.findById(id);
+        if (documentOptional.isEmpty()) {
+            throw new DocumentNotFoundException("Документ с номером " + id + " не найден.");
+        }
+        return documentOptional.get();
+    }
 }
