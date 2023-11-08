@@ -8,11 +8,6 @@ import javax.validation.constraints.NotNull;
 @Data
 public class StatusResponseDto {
     /**
-     * Идентификатор сообщения.
-     */
-    @NotNull
-    private Long messageId;
-    /**
      * Номер документа.
      */
     @NotNull
