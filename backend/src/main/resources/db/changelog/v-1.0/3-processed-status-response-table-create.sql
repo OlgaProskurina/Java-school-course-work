@@ -5,4 +5,4 @@ create table processed_status_response
 (
     message_id varchar(256) primary key
 );
--- rollback drop table processed_messages
+-- rollback drop table processed_status_response
