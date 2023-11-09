@@ -41,5 +41,5 @@ dependencies {
 
 
 test {
-    include('ru/template/example/**')
+    include('ru/course/work/**')
 }
