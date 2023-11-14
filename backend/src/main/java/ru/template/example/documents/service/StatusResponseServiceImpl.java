@@ -31,31 +31,33 @@ public class StatusResponseServiceImpl implements StatusResponseService {
     
     /**
      * Проверяет было ли обработано сообщение, если нет,
-     * то сохраняет его идентификатор в таблицу обработанных сообщений
+     * то сохраняет его ключ идемпотентности в таблицу обработанных сообщений
      * и обновляет статус документа на статус из {@code StatusResponseDto}.
      *
      * @param statusResponseDto сообщение
-     * @param messageKey идентификатор сообщения
      * @throws IllegalDocumentStatusException если статус из {@link  StatusResponseDto}
      *                                        не равен {@code DECLINED} или {@code ACCEPTED}
      */
     @Override
     @Transactional
-    public void processStatusResponse(String messageKey, StatusResponseDto statusResponseDto) {
-        if (processedStatusResponseRepository.existsById(messageKey)) {
-            log.warn("CONSUMER WARN: Сообщение уже обработано id={} payload={}", messageKey, statusResponseDto);
+    public void processStatusResponse(StatusResponseDto statusResponseDto) {
+        if (processedStatusResponseRepository.existsById(statusResponseDto.getIdempotentKey())) {
+            log.warn("CONSUMER WARN: StatusResponseDto уже обработано idempotentKey={}",
+                    statusResponseDto.getIdempotentKey());
             return;
         }
         
+        log.debug("Начата обработка StatusResponseDto idempotentKey={}",statusResponseDto.getIdempotentKey());
         String newStatus = statusResponseDto.getStatus();
         if (!DocumentStatus.ACCEPTED.getCode().equals(newStatus) && !DocumentStatus.DECLINED.getCode().equals(newStatus)) {
             throw new IllegalDocumentStatusException("Ошибка в " + statusResponseDto + ": " +
                     "Значение статуса может быть " + DocumentStatus.DECLINED + " или " + DocumentStatus.ACCEPTED);
         }
         
-        processedStatusResponseRepository.save(new ProcessedStatusResponse(messageKey));
+        processedStatusResponseRepository.save(new ProcessedStatusResponse(statusResponseDto.getIdempotentKey()));
         documentService.updateStatus(statusResponseDto.getDocumentId(), DocumentStatus.valueOf(newStatus));
         
+        log.debug("Обработан StatusResponseDto idempotentKey={}",statusResponseDto.getIdempotentKey());
     }
     
 }

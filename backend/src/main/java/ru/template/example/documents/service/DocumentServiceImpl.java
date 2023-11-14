@@ -118,8 +118,9 @@ public class DocumentServiceImpl implements DocumentService {
      * @param id        идентификатор документа
      * @param newStatus новый статус
      * @throws DocumentNotFoundException если документа с таким идентификатором не найдено
-     * @throws IllegalDocumentStatusException если документа статус документа был не {@link DocumentStatus#IN_PROCESS},
-     *                                       или {@link DocumentStatus#ACCEPTED}, или {@link DocumentStatus#DECLINED}
+     * @throws IllegalDocumentStatusException если документа статус документа был не {@link DocumentStatus#IN_PROCESS}
+     *                                        или {@code newStatus} был не равен {@link DocumentStatus#ACCEPTED}
+     *                                        или {@link DocumentStatus#DECLINED}
      */
     @Override
     @Transactional

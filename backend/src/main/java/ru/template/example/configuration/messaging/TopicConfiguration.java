@@ -21,6 +21,9 @@ public class TopicConfiguration {
     
     @Value(value = "${kafka.topic.process-document}")
     private String processTopic;
+    
+    @Value(value = "${kafka.topic.dlq}")
+    private String dqlTopic;
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
@@ -38,4 +41,10 @@ public class TopicConfiguration {
     public NewTopic responseDocumentStateTopic() {
         return new NewTopic(responseTopic, 1, (short) 1);
     }
+    
+    @Bean
+    public NewTopic dlqTopic() {
+        return new NewTopic(dqlTopic, 1, (short) 1);
+    }
+    
 }

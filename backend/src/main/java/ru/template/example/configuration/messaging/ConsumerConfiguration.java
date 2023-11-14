@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -22,6 +23,7 @@ import java.util.Map;
 @EnableKafka
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "kafka.consumer.enable", havingValue = "true", matchIfMissing = true)
 public class ConsumerConfiguration {
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -40,8 +42,9 @@ public class ConsumerConfiguration {
         config.put(JsonDeserializer.TRUSTED_PACKAGES, "ru.template.example");
         var errorHandlingDeserializer = new ErrorHandlingDeserializer<>(new JsonDeserializer<>(StatusResponseDto.class));
         
-        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(),
-                                                errorHandlingDeserializer);
+        return new DefaultKafkaConsumerFactory<>(config,
+                                                 new StringDeserializer(),
+                                                 errorHandlingDeserializer);
     }
     
     @Bean
