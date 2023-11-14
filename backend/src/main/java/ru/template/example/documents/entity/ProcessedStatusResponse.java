@@ -17,5 +17,5 @@ import javax.persistence.Table;
 public class ProcessedStatusResponse {
     @Id
     @Column(name = "message_id")
-    String messageId;
+    Long messageId;
 }

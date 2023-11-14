@@ -5,6 +5,6 @@ import org.springframework.stereotype.Repository;
 import ru.template.example.documents.entity.ProcessedStatusResponse;
 
 @Repository
-public interface ProcessedStatusResponseRepository extends JpaRepository<ProcessedStatusResponse, String> {
+public interface ProcessedStatusResponseRepository extends JpaRepository<ProcessedStatusResponse, Long> {
 
 }

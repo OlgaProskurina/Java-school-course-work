@@ -8,6 +8,11 @@ import javax.validation.constraints.NotNull;
 @Data
 public class StatusResponseDto {
     /**
+     * Ключ идемпотентности сообщения.
+     */
+    @NotNull
+    private Long idempotentKey;
+    /**
      * Номер документа.
      */
     @NotNull
