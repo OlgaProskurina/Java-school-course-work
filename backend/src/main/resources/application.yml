@@ -8,9 +8,12 @@ cors:
   allow: true
 
 kafka:
+  consumer:
+    enable: true
   topic:
     process-document: process_document
     response-document: response_document
+    dlq: response_dlq
 
 outbox:
   scheduler:
