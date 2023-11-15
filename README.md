@@ -1,32 +1,59 @@
 ## Описание
-
-Фул стек приложение - справочник документов
-
-## Структура
+Фул стек приложение - справочник документов c DLQ и паттернами Outbox и Idempotent Consumer.
+### Структура
 
 - `backend` - Бэкенд на java.
 - `ui` - Фронтенд на react + redux.
 
-## Подготовка
+### Отправка документа в обработку с Outbox Pattern 
 
-Установите:
+![Producer strategy](./images/Producer_strategy.png)
+1. В рамках одной транзакции обновляется статус документа и сохраняется сообщение для кафки в таблицу `message_request_outbox`
+2. Периодически вызывается `ScheduledMessageRequestSender`, который берет сообщение из этой таблицы,
+отправляет его в `request_topic` и ждет ответа от брокера. В случае успеха удаляет сообщение. 
+Отправка и удаление тоже выполняются в одной транзакции.  
 
+### Получение результата обработки документа с Idempotent Consumer и DLQ
+
+![Consumer strategy](./images/Consumer_strategy.png)
+
+#### Idempotent Consumer
+1. В таблице `processed_messages_keys`, куда сохраняются все `idempotentKey` обработанных входящих сообщений, 
+идет поиск `idempotentKey` полученного сообщения, оно пропускается, если его ключ найден.
+2. Если это не дубликат, ключ сохранится, а статус документа обновится на полученный.
+#### DLQ
+Если в процессе обновления статуса произошло исключение, изменения откатятся и ключ не сохранится. 
+`KafkaErrorHandler` перехватит исключение, а само сообщение и ошибку обернет в `DlqMessageResponseDto`: 
+```json
+{ 
+  "errorMessage":"... exception is DocumentNotFoundException: Документ с номером 100 не найден.",
+  "statusResponse":
+    {
+      "idempotentKey": 1,
+      "documentId": 100,
+      "status": "ACCEPTED"
+    }
+}
+```
+И отправит в топик `response_dlq`.
+
+## Запуск
+### Подготовка
+Нужно установить:
 - [node](https://nodejs.org) - front
 - [openjdk](https://openjdk.java.net) 15 - java бэк
 - [docker](https://www.docker.com/get-started/)
 
-## Запуск в докере
+### Сборка
 
-### Сборка фронта
-
+Фронтенд
 ```
 ./gradlew ui:build
 ```
-### Сборка бека
+Бэкенд
 ```
 ./gradlew backend:bootJar
 ```
-
 ### Запуск через docker-compose
 ```
 docker-compose up
@@ -37,12 +64,14 @@ docker-compose up
 http://localhost:9000/#/
 ```
 ## Использование
-Создать документ и отправить в обработку. После этого в топик response-document нужно отправить сообщение вида:
+Создать документ и отправить в обработку. После этого в топик `response-document` нужно отправить сообщение вида:
 ```json
  {
- "documentId": 1,
- "status": "ACCEPTED"
+   "idempotentKey": 1,
+   "documentId": 1,
+   "status": "ACCEPTED"
  }
 ```
-Где documentId - это номер документа, отправленного в обработку, а 
-status - результат обработки документа, может быть или ACCEPTED или DECLINED.
+* `idempotentKey` - это уникальный идентификатор сообщения
+* `documentId` - номер документа, отправленного в обработку
+* `status` - результат обработки документа, может быть или `ACCEPTED` или `DECLINED`.
