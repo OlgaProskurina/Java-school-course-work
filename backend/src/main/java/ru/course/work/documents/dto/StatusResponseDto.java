@@ -1,6 +1,7 @@
 package ru.course.work.documents.dto;
 
 import lombok.Data;
+import ru.course.work.documents.validation.StatusResponseConstraint;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -21,5 +22,6 @@ public class StatusResponseDto {
      * Новый статус документа.
      */
     @NotBlank
+    @StatusResponseConstraint
     private String status;
 }

@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.course.work.documents.DocumentStatus;
 import ru.course.work.documents.dto.DocumentDto;
-import ru.course.work.documents.persistence.entity.Document;
 import ru.course.work.documents.exceptions.DocumentNotFoundException;
-import ru.course.work.documents.persistence.repository.DocumentRepository;
-import ru.course.work.documents.mapper.DocumentMapper;
 import ru.course.work.documents.exceptions.IllegalDocumentStatusException;
+import ru.course.work.documents.mapper.DocumentMapper;
+import ru.course.work.documents.persistence.entity.Document;
+import ru.course.work.documents.persistence.repository.DocumentRepository;
 import ru.course.work.documents.service.kafka.MessageRequestService;
 
 import java.time.LocalDate;
@@ -71,16 +71,16 @@ public class DocumentServiceImpl implements DocumentService {
      *
      * @param id идентификатор документа
      * @return обновленный документ
-     * @throws DocumentNotFoundException если документа с таким идентификатором не найдено
+     * @throws DocumentNotFoundException      если документа с таким идентификатором не найдено
      * @throws IllegalDocumentStatusException если статус документа был не {@link DocumentStatus#NEW}
-     *
      */
     @Override
     @Transactional
     public DocumentDto processDocument(Long id) {
         Document document = requireDocument(id);
         if (!DocumentStatus.NEW.equals(document.getStatus())) {
-            throw new IllegalDocumentStatusException("Отправить в обработку можно только документ со статусом " + DocumentStatus.NEW);
+            throw new IllegalDocumentStatusException("Отправить в обработку можно только документ со статусом "
+                    + DocumentStatus.NEW);
         }
         document.setStatus(DocumentStatus.IN_PROCESS);
         DocumentDto documentDto = documentMapper.toDocumentDto(document);
@@ -118,7 +118,7 @@ public class DocumentServiceImpl implements DocumentService {
      *
      * @param id        идентификатор документа
      * @param newStatus новый статус
-     * @throws DocumentNotFoundException если документа с таким идентификатором не найдено
+     * @throws DocumentNotFoundException      если документа с таким идентификатором не найдено
      * @throws IllegalDocumentStatusException если документа статус документа был не {@link DocumentStatus#IN_PROCESS}
      *                                        или {@code newStatus} был не равен {@link DocumentStatus#ACCEPTED}
      *                                        или {@link DocumentStatus#DECLINED}

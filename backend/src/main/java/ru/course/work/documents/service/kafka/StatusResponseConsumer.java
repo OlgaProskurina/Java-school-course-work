@@ -7,6 +7,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import ru.course.work.documents.dto.StatusResponseDto;
 
+import javax.validation.Valid;
+
 /**
  * Класс-консюмер сообщений из кафки.
  */
@@ -24,7 +26,7 @@ public class StatusResponseConsumer {
      * @param payload полученное сообщение
      */
     @KafkaListener(topics = "${kafka.topic.response-document}", groupId = "${spring.kafka.consumer.group-id}")
-    public void listen(@Payload StatusResponseDto payload,
+    public void listen(@Payload @Valid StatusResponseDto payload,
                        Acknowledgment acknowledgment) {
         messageResponseService.processStatusResponse(payload);
         acknowledgment.acknowledge();

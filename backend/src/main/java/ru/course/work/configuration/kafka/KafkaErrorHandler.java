@@ -18,10 +18,10 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import ru.course.work.documents.dto.DlqMessageResponseDto;
 import ru.course.work.documents.dto.StatusResponseDto;
-
-import java.util.Optional;
 
 /**
  * Обработчик исключений, возникших во время работы консюмера.
@@ -42,14 +42,13 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
      */
     private final ObjectMapper objectMapper;
     /**
-     * Для отправки сообщений в DQL.
+     * Для отправки сообщений в DLQ.
      */
     private final KafkaTemplate<String, JsonNode> kafkaTemplate;
     
-    
     /**
      * Обрабатывает исключения, возникшие во время работы консюмера,
-     * если причиной ошибки было не {@code DeserializationException},
+     * если причиной ошибки было не {@code DeserializationException} и {@code MethodArgumentNotValidException},
      * то отправляет {@code data.value()} в DLQ.
      *
      * @param thrownException исключение
@@ -59,19 +58,25 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
     @Override
     public void handle(Exception thrownException, ConsumerRecord<?, ?> data, Consumer<?, ?> consumer) {
         seek(data, consumer);
-        String topic = data.topic();
-        long offset = data.offset();
-        int partition = data.partition();
-        Optional<DeserializationException> deserializationException = isDeserializationException(thrownException);
-        if (deserializationException.isPresent()) {
-            DeserializationException exception = deserializationException.get();
-            String malformedMessage = new String(exception.getData());
-            log.error("CONSUMER ERROR: Пропуск сообщения в {} offset {} partition {} - data: {} , причина: {}",
-                    topic, offset, partition, malformedMessage, exception.getMessage());
+        
+        Throwable cause = thrownException.getCause();
+        String logMessage = "CONSUMER ERROR: Пропуск сообщения в " + data.topic() + " offset " + data.offset() +
+                " partition " + data.partition() + " причина " + cause;
+        
+        if (cause instanceof DeserializationException) {
+            var deserializationException = (DeserializationException) cause;
+            String malformedMessage = new String(deserializationException.getData());
+            log.error(logMessage + " сообщение " + malformedMessage);
             
+        } else if (cause instanceof MethodArgumentNotValidException) {
+            var notValidException = (MethodArgumentNotValidException) cause;
+            StringBuilder errors = new StringBuilder();
+            for (FieldError error : notValidException.getBindingResult().getFieldErrors()) {
+                errors.append(error.getField()).append(": ").append(error.getDefaultMessage());
+            }
+            log.error(logMessage + " ошибки валидации " + errors);
         } else {
-            log.error("CONSUMER ERROR: Пропуск сообщения в {} - offset {} - partition {}, Отправка в DLQ причина {}",
-                    topic, offset, partition, thrownException.getMessage());
+            log.error(logMessage + " Отправка в DLQ");
             sendToDlq(data.value(), thrownException);
         }
     }
@@ -83,7 +88,7 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
      * @param value           сообщение
      * @param thrownException возникшее исключение
      */
-    public void sendToDlq(Object value, Exception thrownException) {
+    private void sendToDlq(Object value, Exception thrownException) {
         DlqMessageResponseDto dlqDto = new DlqMessageResponseDto();
         dlqDto.setErrorMessage(thrownException.getMessage());
         dlqDto.setStatusResponse((StatusResponseDto) value);
@@ -93,8 +98,7 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
         future.addCallback(new ListenableFutureCallback<>() {
             @Override
             public void onFailure(@NonNull Throwable ex) {
-                log.error("DQL PRODUCER ERROR: Не удалось отправить сообщение {}, exception {} ",
-                        dlqDto, ex.getMessage());
+                log.error("DLQ PRODUCER ERROR: Не удалось отправить сообщение {}, exception {} ", dlqDto, ex.getMessage());
             }
             
             @Override
@@ -114,23 +118,6 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
     private void seek(ConsumerRecord<?, ?> data, Consumer<?, ?> consumer) {
         TopicPartition topicPartition = new TopicPartition(data.topic(), data.partition());
         consumer.seek(topicPartition, data.offset() + 1L);
-    }
-    
-    /**
-     * Ссылку на {@code DeserializationException} если оно было причиной исключения.
-     *
-     * @param thrownException исключение
-     * @return ссылку на {@code DeserializationException} если оно было причиной исключения.
-     */
-    private Optional<DeserializationException> isDeserializationException(Exception thrownException) {
-        if (thrownException instanceof DeserializationException) {
-            return Optional.of((DeserializationException) thrownException);
-        }
-        if (thrownException.getCause() != null &&
-            thrownException.getCause() instanceof DeserializationException) {
-            return Optional.of((DeserializationException) thrownException.getCause());
-        }
-        return Optional.empty();
     }
     
 }

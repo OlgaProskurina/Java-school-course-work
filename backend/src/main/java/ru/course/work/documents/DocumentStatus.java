@@ -22,7 +22,6 @@ public enum DocumentStatus {
         }
     }, DECLINED("DECLINED") {
         @Override
-        @JsonProperty("name")
         public String getName() {
             return "Отклонен";
         }
