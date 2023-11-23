@@ -23,7 +23,7 @@ public class TopicConfiguration {
     private String processTopic;
     
     @Value(value = "${kafka.topic.dlq}")
-    private String dqlTopic;
+    private String dlqTopic;
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
@@ -44,7 +44,7 @@ public class TopicConfiguration {
     
     @Bean
     public NewTopic dlqTopic() {
-        return new NewTopic(dqlTopic, 1, (short) 1);
+        return new NewTopic(dlqTopic, 1, (short) 1);
     }
     
 }

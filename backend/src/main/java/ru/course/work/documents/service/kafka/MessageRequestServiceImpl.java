@@ -31,7 +31,7 @@ public class MessageRequestServiceImpl implements MessageRequestService {
      * Топик для отправки сообщений.
      */
     @Value(value = "${kafka.topic.process-document}")
-    private String topic;
+    private String requestTopic;
     /**
      * Для маппинга ДТО в {@code JsonNode}.
      */
@@ -43,7 +43,7 @@ public class MessageRequestServiceImpl implements MessageRequestService {
     /**
      * Для отправки сообщений брокеру.
      */
-    private final KafkaTemplate<String, JsonNode> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     
     /**
      * Создает исходящее сообщение и сохраняет его.
@@ -66,26 +66,31 @@ public class MessageRequestServiceImpl implements MessageRequestService {
     @Transactional
     public void processMessages() {
         Optional<MessageRequest> messageRequestOptional = messageRequestRepository.findUnsentMessage();
-
-        if(messageRequestOptional.isPresent()) {
+        
+        if (messageRequestOptional.isPresent()) {
             var messageRequest = messageRequestOptional.get();
-            ListenableFuture<SendResult<String, JsonNode>> future =
-                    kafkaTemplate.send(topic, messageRequest.getPayload());
+            log.debug("Начата отправка MessageRequest id={} в {}", messageRequest.getId(), requestTopic);
+            
+            ListenableFuture<SendResult<String, Object>> future =
+                    kafkaTemplate.send(requestTopic, messageRequest.getPayload());
             future.addCallback(new ListenableFutureCallback<>() {
                 @Override
                 public void onFailure(@NonNull Throwable ex) {
-                    log.error("PRODUCER ERROR: Не удалось отправить сообщение, exception {}", ex.getLocalizedMessage());
+                    log.error("PRODUCER ERROR: Не удалось отправить сообщение в {} причина {}",
+                            requestTopic, ex.getMessage());
                 }
                 
                 @Override
-                public void onSuccess(SendResult<String, JsonNode> result) {
+                public void onSuccess(SendResult<String, Object> result) {
                     messageRequestRepository.deleteById(messageRequest.getId());
+                    log.debug("Сообщение успешно отправлено в {} metadata {}",
+                            requestTopic, result.getRecordMetadata());
                 }
             });
             try {
                 future.get();
             } catch (InterruptedException | ExecutionException e) {
-                log.error("PRODUCER ERROR: Не удалось отправить сообщение." + e.getLocalizedMessage());
+                log.error("PRODUCER ERROR: Не удалось отправить сообщение." + e.getMessage());
             }
         }
     }
