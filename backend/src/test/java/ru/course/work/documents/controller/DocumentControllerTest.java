@@ -1,4 +1,4 @@
-package ru.template.example.documents.controller;
+package ru.course.work.documents.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,17 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-import ru.course.work.controller.AbstractWebMvcTest;
-import ru.course.work.documents.dto.DocumentDto;
-import ru.course.work.documents.service.DocumentServiceImpl;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import ru.template.example.documents.dto.DocumentDto;
-import ru.template.example.documents.dto.IdDto;
-import ru.template.example.documents.dto.IdsDto;
-import ru.template.example.documents.expeptions.DocumentNotFoundException;
-import ru.template.example.documents.expeptions.IllegalDocumentStatusException;
-import ru.template.example.documents.service.DocumentServiceImpl;
+import ru.course.work.documents.dto.DocumentDto;
+import ru.course.work.documents.dto.IdDto;
+import ru.course.work.documents.dto.IdsDto;
+import ru.course.work.documents.exceptions.DocumentNotFoundException;
+import ru.course.work.documents.exceptions.IllegalDocumentStatusException;
+import ru.course.work.documents.service.DocumentServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Класс тестирующий методы контроллера {@link ru.template.example.documents.controller.DocumentController}
+ * Класс тестирующий методы контроллера {@link ru.course.work.documents.controller.DocumentController}
  */
 @RunWith(SpringRunner.class)
 @WebMvcTest
