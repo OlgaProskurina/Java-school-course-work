@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.PARAMETER, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface StatusResponseConstraint {
-    String message() default "Статус может быть или ACCEPTED или DECLINED";
+    String message() default "Status should be \"ACCEPTED\" or \"DECLINED\"";
     
     Class<?>[] groups() default {};
     
