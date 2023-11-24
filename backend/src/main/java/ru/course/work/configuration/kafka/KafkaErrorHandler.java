@@ -1,12 +1,9 @@
 package ru.course.work.configuration.kafka;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -33,18 +30,14 @@ import ru.course.work.documents.dto.StatusResponseDto;
 public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
     
     /**
-     * Топик для отправки сообщений.
+     * DLQ топик.
      */
     @Value(value = "${kafka.topic.dlq}")
     private String dlqTopic;
     /**
-     * Для маппинга ДТО в {@code JsonNode}.
-     */
-    private final ObjectMapper objectMapper;
-    /**
      * Для отправки сообщений в DLQ.
      */
-    private final KafkaTemplate<String, JsonNode> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     
     /**
      * Обрабатывает исключения, возникшие во время работы консюмера,
@@ -82,8 +75,7 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
     }
     
     /**
-     * Сохраняет сообщение и исключение, из-за которого не удалось его обработать, в {@code DlqMessageResponseDto}
-     * и отправляет в топик DLQ.
+     * Оборачивает сообщение и исключение в {@code DlqMessageResponseDto} и отправляет в топик DLQ.
      *
      * @param value           сообщение
      * @param thrownException возникшее исключение
@@ -93,8 +85,7 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
         dlqDto.setErrorMessage(thrownException.getMessage());
         dlqDto.setStatusResponse((StatusResponseDto) value);
         
-        var record = new ProducerRecord<String, JsonNode>(dlqTopic, objectMapper.convertValue(dlqDto, JsonNode.class));
-        ListenableFuture<SendResult<String, JsonNode>> future = kafkaTemplate.send(record);
+        ListenableFuture<SendResult<String, Object>> future = kafkaTemplate.send(dlqTopic, dlqDto);
         future.addCallback(new ListenableFutureCallback<>() {
             @Override
             public void onFailure(@NonNull Throwable ex) {
@@ -102,7 +93,7 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
             }
             
             @Override
-            public void onSuccess(SendResult<String, JsonNode> result) {
+            public void onSuccess(SendResult<String, Object> result) {
                 log.debug("Message sent successful to DLQ metadata {}", result.getRecordMetadata());
             }
         });
