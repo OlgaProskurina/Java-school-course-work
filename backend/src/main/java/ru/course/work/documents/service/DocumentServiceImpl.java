@@ -79,8 +79,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentDto processDocument(Long id) {
         Document document = requireDocument(id);
         if (!DocumentStatus.NEW.equals(document.getStatus())) {
-            throw new IllegalDocumentStatusException("Отправить в обработку можно только документ со статусом "
-                    + DocumentStatus.NEW);
+            throw new IllegalDocumentStatusException("Document status was not " + DocumentStatus.NEW);
         }
         document.setStatus(DocumentStatus.IN_PROCESS);
         DocumentDto documentDto = documentMapper.toDocumentDto(document);
@@ -128,11 +127,11 @@ public class DocumentServiceImpl implements DocumentService {
     public void updateStatus(Long id, DocumentStatus newStatus) {
         Document document = requireDocument(id);
         if (!DocumentStatus.IN_PROCESS.equals(document.getStatus())) {
-            throw new IllegalDocumentStatusException("Документ должен иметь статус " + DocumentStatus.IN_PROCESS);
+            throw new IllegalDocumentStatusException("Document status was not " + DocumentStatus.IN_PROCESS);
         }
         if (!DocumentStatus.ACCEPTED.equals(newStatus) && !DocumentStatus.DECLINED.equals(newStatus)) {
-            throw new IllegalDocumentStatusException("Новый статус может быть или " + DocumentStatus.ACCEPTED +
-                    " или " + DocumentStatus.DECLINED);
+            throw new IllegalDocumentStatusException("New status should be " + DocumentStatus.ACCEPTED +
+                    " or " + DocumentStatus.DECLINED);
         }
         document.setStatus(newStatus);
     }
@@ -147,7 +146,7 @@ public class DocumentServiceImpl implements DocumentService {
     private Document requireDocument(Long id) {
         Optional<Document> documentOptional = documentRepository.findById(id);
         if (documentOptional.isEmpty()) {
-            throw new DocumentNotFoundException("Документ с номером " + id + " не найден.");
+            throw new DocumentNotFoundException("Document with id= " + id + " not found");
         }
         return documentOptional.get();
     }

@@ -69,28 +69,29 @@ public class MessageRequestServiceImpl implements MessageRequestService {
         
         if (messageRequestOptional.isPresent()) {
             var messageRequest = messageRequestOptional.get();
-            log.debug("Начата отправка MessageRequest id={} в {}", messageRequest.getId(), requestTopic);
+            log.debug("Sending MessageRequest id={} to {}", messageRequest.getId(), requestTopic);
             
             ListenableFuture<SendResult<String, Object>> future =
                     kafkaTemplate.send(requestTopic, messageRequest.getPayload());
             future.addCallback(new ListenableFutureCallback<>() {
                 @Override
                 public void onFailure(@NonNull Throwable ex) {
-                    log.error("PRODUCER ERROR: Не удалось отправить сообщение в {} причина {}",
+                    log.error("PRODUCER ERROR: Failed to send message to {} exception {}",
                             requestTopic, ex.getMessage());
                 }
                 
                 @Override
                 public void onSuccess(SendResult<String, Object> result) {
                     messageRequestRepository.deleteById(messageRequest.getId());
-                    log.debug("Сообщение успешно отправлено в {} metadata {}",
+                    log.debug("Message sent successful to {} metadata {}",
                             requestTopic, result.getRecordMetadata());
                 }
             });
             try {
                 future.get();
             } catch (InterruptedException | ExecutionException e) {
-                log.error("PRODUCER ERROR: Не удалось отправить сообщение." + e.getMessage());
+                log.error("PRODUCER ERROR: Failed to send message to {} exception {}",
+                        requestTopic, e.getMessage());
             }
         }
     }

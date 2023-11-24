@@ -27,7 +27,7 @@ public class ControllersLogging {
      */
     @Before("pointcut()")
     public void logInfoMethodCall(JoinPoint joinPoint) {
-        log.info("Вызов метода контроллера {}, args: {}", joinPoint.getSignature(), joinPoint.getArgs());
+        log.info("Call controller method {} args: {}", joinPoint.getSignature(), joinPoint.getArgs());
     }
 
 }

@@ -60,13 +60,13 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
         seek(data, consumer);
         
         Throwable cause = thrownException.getCause();
-        String logMessage = "CONSUMER ERROR: Пропуск сообщения в " + data.topic() + " offset " + data.offset() +
-                " partition " + data.partition() + " причина " + cause;
+        String logMessage = "CONSUMER ERROR: Skip message in " + data.topic() + " offset " + data.offset() +
+                " partition " + data.partition() + " exception " + cause;
         
         if (cause instanceof DeserializationException) {
             var deserializationException = (DeserializationException) cause;
             String malformedMessage = new String(deserializationException.getData());
-            log.error(logMessage + " сообщение " + malformedMessage);
+            log.error(logMessage + " data " + malformedMessage);
             
         } else if (cause instanceof MethodArgumentNotValidException) {
             var notValidException = (MethodArgumentNotValidException) cause;
@@ -74,9 +74,9 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
             for (FieldError error : notValidException.getBindingResult().getFieldErrors()) {
                 errors.append(error.getField()).append(": ").append(error.getDefaultMessage());
             }
-            log.error(logMessage + " ошибки валидации " + errors);
+            log.error(logMessage + " validation errors " + errors);
         } else {
-            log.error(logMessage + " Отправка в DLQ");
+            log.error(logMessage + " sending to DLQ");
             sendToDlq(data.value(), thrownException);
         }
     }
@@ -98,12 +98,12 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
         future.addCallback(new ListenableFutureCallback<>() {
             @Override
             public void onFailure(@NonNull Throwable ex) {
-                log.error("DLQ PRODUCER ERROR: Не удалось отправить сообщение {}, exception {} ", dlqDto, ex.getMessage());
+                log.error("DLQ PRODUCER ERROR: Failed to send message {} exception {} ", dlqDto, ex.getMessage());
             }
             
             @Override
             public void onSuccess(SendResult<String, JsonNode> result) {
-                log.debug("Сообщение успешно отправлено metadata {}", result.getRecordMetadata());
+                log.debug("Message sent successful to DLQ metadata {}", result.getRecordMetadata());
             }
         });
         

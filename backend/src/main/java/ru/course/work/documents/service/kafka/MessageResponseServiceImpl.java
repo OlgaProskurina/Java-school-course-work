@@ -42,17 +42,17 @@ public class MessageResponseServiceImpl implements MessageResponseService {
     @Transactional
     public void processStatusResponse(StatusResponseDto statusResponseDto) {
         if (messageResponseRepository.existsById(statusResponseDto.getIdempotentKey())) {
-            log.warn("CONSUMER WARN: StatusResponseDto уже обработано idempotentKey={}",
+            log.warn("CONSUMER WARN: StatusResponseDto is already processed idempotentKey={}",
                     statusResponseDto.getIdempotentKey());
             return;
         }
-        log.debug("Начата обработка StatusResponseDto idempotentKey={}", statusResponseDto.getIdempotentKey());
+        log.debug("Processing StatusResponseDto idempotentKey={}", statusResponseDto.getIdempotentKey());
         
         messageResponseRepository.save(new MessageResponse(statusResponseDto.getIdempotentKey()));
         documentService.updateStatus(statusResponseDto.getDocumentId(),
                                      DocumentStatus.valueOf(statusResponseDto.getStatus()));
         
-        log.debug("Обработан StatusResponseDto idempotentKey={}", statusResponseDto.getIdempotentKey());
+        log.debug("Processed StatusResponseDto idempotentKey={}", statusResponseDto.getIdempotentKey());
     }
     
 }
