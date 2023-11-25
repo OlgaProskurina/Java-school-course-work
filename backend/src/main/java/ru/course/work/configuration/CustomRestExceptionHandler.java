@@ -2,6 +2,7 @@ package ru.course.work.configuration;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.dialect.lock.OptimisticEntityLockException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 /**
@@ -83,6 +85,17 @@ public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("BAD REQUEST: Document not found exception", ex);
         RestApiError restApiError = new RestApiError("Document not found", List.of(ex.getLocalizedMessage()));
         return new ResponseEntity<>(restApiError, new HttpHeaders(), BAD_REQUEST);
+    }
+    
+    /**
+     * Обработчик {@code OptimisticEntityLockException}
+     */
+    @ExceptionHandler({OptimisticEntityLockException.class})
+    public ResponseEntity<RestApiError> handleOptimisticLockException(final OptimisticEntityLockException ex,
+                                                                      final WebRequest request) {
+        logger.error("CONFLICT: Entity change conflict", ex);
+        RestApiError restApiError = new RestApiError("Conflict while updating", List.of(ex.getLocalizedMessage()));
+        return new ResponseEntity<>(restApiError, new HttpHeaders(), CONFLICT);
     }
     
     /**
