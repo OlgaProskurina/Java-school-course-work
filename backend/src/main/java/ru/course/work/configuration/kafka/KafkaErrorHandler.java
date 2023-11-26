@@ -40,9 +40,9 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     
     /**
-     * Обрабатывает исключения, возникшие во время работы консюмера,
-     * если причиной ошибки было не {@code DeserializationException} и {@code MethodArgumentNotValidException},
-     * то отправляет {@code data.value()} в DLQ.
+     * Логирует исключения, возникшие во время работы консюмера, и если причиной были
+     * {@code DeserializationException} или {@code MethodArgumentNotValidException},
+     * отправляет {@code data.value()} и {@code thrownException} в DLQ.
      *
      * @param thrownException исключение
      * @param data            запись из кафки
@@ -51,45 +51,41 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
     @Override
     public void handle(Exception thrownException, ConsumerRecord<?, ?> data, Consumer<?, ?> consumer) {
         seek(data, consumer);
-        
         Throwable cause = thrownException.getCause();
-        String logMessage = "CONSUMER ERROR: Skip message in " + data.topic() + " offset " + data.offset() +
-                " partition " + data.partition() + " exception " + cause;
+        log.error("CONSUMER ERROR: Skip message in topic {} offset {} partition {} due to exception {}",
+                data.topic(), data.offset(), data.partition(), cause.getMessage());
         
         if (cause instanceof DeserializationException) {
             var deserializationException = (DeserializationException) cause;
             String malformedMessage = new String(deserializationException.getData());
-            log.error(logMessage + " data " + malformedMessage);
-            
+            sendToDlq(data.value(), cause.getMessage() + " data " + malformedMessage);
         } else if (cause instanceof MethodArgumentNotValidException) {
             var notValidException = (MethodArgumentNotValidException) cause;
-            StringBuilder errors = new StringBuilder();
+            StringBuilder fieldErrors = new StringBuilder();
             for (FieldError error : notValidException.getBindingResult().getFieldErrors()) {
-                errors.append(error.getField()).append(": ").append(error.getDefaultMessage());
+                fieldErrors.append(error.getField()).append(": ").append(error.getDefaultMessage());
             }
-            log.error(logMessage + " validation errors " + errors);
-        } else {
-            log.error(logMessage + " sending to DLQ");
-            sendToDlq(data.value(), thrownException);
+            sendToDlq(data.value(), cause.getMessage() + " field errors " + fieldErrors);
         }
+        
     }
     
     /**
-     * Оборачивает сообщение и исключение в {@code DlqMessageResponseDto} и отправляет в топик DLQ.
+     * Оборачивает {@code value} и {@code exceptionMessage} в {@code DlqMessageResponseDto} и отправляет в топик DLQ.
      *
-     * @param value           сообщение
-     * @param thrownException возникшее исключение
+     * @param payload          сообщение, полученное консюмером
+     * @param exceptionMessage сообщение с ошибкой
      */
-    private void sendToDlq(Object value, Exception thrownException) {
+    private void sendToDlq(Object payload, String exceptionMessage) {
         DlqMessageResponseDto dlqDto = new DlqMessageResponseDto();
-        dlqDto.setErrorMessage(thrownException.getMessage());
-        dlqDto.setStatusResponse((StatusResponseDto) value);
-        
+        dlqDto.setErrorMessage(exceptionMessage);
+        dlqDto.setStatusResponse((StatusResponseDto) payload);
+        log.error("Sending to DLQ due to exception {}", exceptionMessage);
         ListenableFuture<SendResult<String, Object>> future = kafkaTemplate.send(dlqTopic, dlqDto);
         future.addCallback(new ListenableFutureCallback<>() {
             @Override
             public void onFailure(@NonNull Throwable ex) {
-                log.error("DLQ PRODUCER ERROR: Failed to send message {} exception {} ", dlqDto, ex.getMessage());
+                log.error("DLQ PRODUCER ERROR: Failed to send message {} due to exception {}", dlqDto, ex.getMessage());
             }
             
             @Override
