@@ -9,6 +9,7 @@ create table document
     date         timestamp,
     description  text,
     patient      varchar(256),
-    status       varchar(30)
+    status       varchar(30),
+    version      bigint
 );
 -- rollback drop table document
