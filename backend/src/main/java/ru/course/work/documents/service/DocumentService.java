@@ -52,6 +52,7 @@ public interface DocumentService {
      *
      * @param id        идентификатор документа
      * @param newStatus новый статус
+     * @return обновленный документ
      */
-    void updateStatus(Long id, DocumentStatus newStatus);
+    DocumentDto updateStatus(Long id, DocumentStatus newStatus);
 }

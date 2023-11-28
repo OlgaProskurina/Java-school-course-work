@@ -1,6 +1,9 @@
 package ru.course.work.documents.service.kafka;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import ru.course.work.documents.dto.DocumentDto;
+
+import java.util.Optional;
 
 
 /**
@@ -17,6 +20,6 @@ public interface MessageRequestService {
     /**
      * Отправляет сообщение брокеру.
      */
-    void processMessages();
+    Optional<ProducerRecord<String, Object>> processMessages();
     
 }

@@ -117,6 +117,7 @@ public class DocumentServiceImpl implements DocumentService {
      *
      * @param id        идентификатор документа
      * @param newStatus новый статус
+     * @return обновленный документ
      * @throws DocumentNotFoundException      если документа с таким идентификатором не найдено
      * @throws IllegalDocumentStatusException если документа статус документа был не {@link DocumentStatus#IN_PROCESS}
      *                                        или {@code newStatus} был не равен {@link DocumentStatus#ACCEPTED}
@@ -124,7 +125,7 @@ public class DocumentServiceImpl implements DocumentService {
      */
     @Override
     @Transactional
-    public void updateStatus(Long id, DocumentStatus newStatus) {
+    public DocumentDto updateStatus(Long id, DocumentStatus newStatus) {
         Document document = requireDocument(id);
         if (!DocumentStatus.IN_PROCESS.equals(document.getStatus())) {
             throw new IllegalDocumentStatusException("Document status was not " + DocumentStatus.IN_PROCESS);
@@ -134,6 +135,7 @@ public class DocumentServiceImpl implements DocumentService {
                     " or " + DocumentStatus.DECLINED);
         }
         document.setStatus(newStatus);
+        return documentMapper.toDocumentDto(document);
     }
     
     /**

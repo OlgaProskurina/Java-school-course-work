@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -57,10 +58,13 @@ public class MessageRequestServiceImpl implements MessageRequestService {
     /**
      * Пытается найти не отправленное сообщение, если такое существует, то отправляет его в кафку.
      * Если удалось отправить сообщение удаляет его из таблицы.
+     * Возвращает ссылку на отправленный {@code ProducerRecord<String, Object>}.
+     *
+     * @return возвращает ссылку на отправленный {@code ProducerRecord<String, Object>}
      */
     @Override
     @Transactional
-    public void processMessages() {
+    public Optional<ProducerRecord<String, Object>> processMessages() {
         Optional<MessageRequest> messageRequestOptional = messageRequestRepository.findUnsentMessage();
         if (messageRequestOptional.isPresent()) {
             var messageRequest = messageRequestOptional.get();
@@ -70,12 +74,14 @@ public class MessageRequestServiceImpl implements MessageRequestService {
                 messageRequestRepository.deleteById(messageRequest.getId());
                 log.debug("Message sent successful to {} metadata {}. Deleted from outbox",
                         requestTopic, sendResult.getRecordMetadata());
+                return Optional.of(sendResult.getProducerRecord());
             } catch (InterruptedException | ExecutionException e) {
                 log.error("PRODUCER ERROR: Failed to send message to {} exception {}",
                         requestTopic, e.getMessage());
             }
             
         }
+        return Optional.empty();
     }
     
 }
