@@ -12,11 +12,10 @@ import org.springframework.kafka.listener.ConsumerAwareErrorHandler;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.lang.NonNull;
+import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import ru.course.work.documents.dto.DlqMessageResponseDto;
 import ru.course.work.documents.dto.StatusResponseDto;
 
@@ -54,18 +53,14 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
         Throwable cause = thrownException.getCause();
         log.error("CONSUMER ERROR: Skip message in topic {} offset {} partition {} due to exception {}",
                 data.topic(), data.offset(), data.partition(), cause.getMessage());
-        
+        System.err.println(thrownException.getClass());
+        System.err.println(thrownException.getCause().getClass());
         if (cause instanceof DeserializationException) {
             var deserializationException = (DeserializationException) cause;
             String malformedMessage = new String(deserializationException.getData());
             sendToDlq(data.value(), cause.getMessage() + " data " + malformedMessage);
         } else if (cause instanceof MethodArgumentNotValidException) {
-            var notValidException = (MethodArgumentNotValidException) cause;
-            StringBuilder fieldErrors = new StringBuilder();
-            for (FieldError error : notValidException.getBindingResult().getFieldErrors()) {
-                fieldErrors.append(error.getField()).append(": ").append(error.getDefaultMessage());
-            }
-            sendToDlq(data.value(), cause.getMessage() + " field errors " + fieldErrors);
+            sendToDlq(data.value(), cause.getMessage());
         }
         
     }
