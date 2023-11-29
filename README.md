@@ -22,14 +22,14 @@
 идет поиск ключа полученного сообщения. Если он не найден, то его `idempotentKey` сохранится, 
 а статус документа обновится на полученный.
 #### DLQ
-Если полученное сообщение вызвало ошибку валидации или десериализации, то `KafkaErrorHandler` перехватит их и
-сообщение с ошибкой обернет в `DlqMessageResponseDto`: 
+Если в процессе обработки сообщения возникли исключения, то `KafkaErrorHandler` перехватит их, а само
+сообщение и ошибку обернет в `DlqMessageResponseDto`: 
 ```json
 { 
-  "errorMessage":"... exception is org.apache.kafka.common.errors.SerializationException: Can't deserialize data",
+  "errorMessage":"Could not resolve method parameter at index 0 in ...",
   "statusResponse":
     {
-      "idempotentKey": 1,
+      "idempotentKey": "",
       "documentId": 100,
       "status": "ACCEPTED"
     }
