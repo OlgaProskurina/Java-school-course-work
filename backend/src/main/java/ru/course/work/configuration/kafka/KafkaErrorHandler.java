@@ -12,7 +12,6 @@ import org.springframework.kafka.listener.ConsumerAwareErrorHandler;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.lang.NonNull;
-import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
@@ -51,15 +50,15 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
     public void handle(Exception thrownException, ConsumerRecord<?, ?> data, Consumer<?, ?> consumer) {
         seek(data, consumer);
         Throwable cause = thrownException.getCause();
-        log.error("CONSUMER ERROR: Skip message in topic {} offset {} partition {} due to exception {}",
-                data.topic(), data.offset(), data.partition(), cause.getMessage());
-        System.err.println(thrownException.getClass());
-        System.err.println(thrownException.getCause().getClass());
         if (cause instanceof DeserializationException) {
             var deserializationException = (DeserializationException) cause;
             String malformedMessage = new String(deserializationException.getData());
-            sendToDlq(data.value(), cause.getMessage() + " data " + malformedMessage);
-        } else if (cause instanceof MethodArgumentNotValidException) {
+            log.error("CONSUMER ERROR: Skip message in topic {} offset {} partition {} due to " +
+                            "DeserializationException exception {} data {}",
+                    data.topic(), data.offset(), data.partition(), cause.getMessage(), malformedMessage);
+        } else {
+            log.error("CONSUMER ERROR: Skip message in topic {} offset {} partition {}. Sending to DLQ due to exception {}",
+                    data.topic(), data.offset(), data.partition(), cause.getMessage());
             sendToDlq(data.value(), cause.getMessage());
         }
         
@@ -75,7 +74,6 @@ public class KafkaErrorHandler implements ConsumerAwareErrorHandler {
         DlqMessageResponseDto dlqDto = new DlqMessageResponseDto();
         dlqDto.setErrorMessage(exceptionMessage);
         dlqDto.setStatusResponse((StatusResponseDto) payload);
-        log.error("Sending to DLQ due to exception {}", exceptionMessage);
         ListenableFuture<SendResult<String, Object>> future = kafkaTemplate.send(dlqTopic, dlqDto);
         future.addCallback(new ListenableFutureCallback<>() {
             @Override
